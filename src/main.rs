@@ -7,6 +7,7 @@ use clap::{Parser, ValueEnum};
 pub enum DiagramArg {
     Class,
     Er,
+    Sequence,
     Zenuml,
 }
 
@@ -33,7 +34,7 @@ struct Cli {
     #[arg(short = 'l', long = "language", default_value = "auto")]
     language: LanguageArg,
 
-    /// Entry function for ZenUML sequence diagrams
+    /// Entry function for sequence diagrams
     #[arg(short = 'e', long = "entry")]
     entry: Option<String>,
 
@@ -52,6 +53,7 @@ fn main() -> Result<()> {
     let diagram_type = match cli.diagram {
         DiagramArg::Class => code_documenter::emit::DiagramType::Class,
         DiagramArg::Er => code_documenter::emit::DiagramType::Er,
+        DiagramArg::Sequence => code_documenter::emit::DiagramType::Sequence,
         DiagramArg::Zenuml => code_documenter::emit::DiagramType::Zenuml,
     };
 

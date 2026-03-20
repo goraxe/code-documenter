@@ -1,5 +1,6 @@
 pub mod class_diagram;
 pub mod er_diagram;
+pub mod sequence;
 pub mod zenuml;
 
 use crate::model::CodeModel;
@@ -14,6 +15,7 @@ pub trait DiagramEmitter {
 pub enum DiagramType {
     Class,
     Er,
+    Sequence,
     Zenuml,
 }
 
@@ -41,6 +43,7 @@ pub fn get_emitter(diagram_type: DiagramType) -> Box<dyn DiagramEmitter> {
     match diagram_type {
         DiagramType::Class => Box::new(class_diagram::ClassDiagramEmitter),
         DiagramType::Er => Box::new(er_diagram::ErDiagramEmitter),
+        DiagramType::Sequence => Box::new(sequence::SequenceEmitter),
         DiagramType::Zenuml => Box::new(zenuml::ZenumlEmitter),
     }
 }

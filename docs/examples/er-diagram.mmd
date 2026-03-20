@@ -7,17 +7,18 @@ erDiagram
         string Go
         string TypeScript
     }
-    RustParser {
-    }
     GoParser {
     }
     TypeScriptParser {
+    }
+    RustParser {
     }
     DiagramEmitter {
     }
     DiagramType {
         string Class
         string Er
+        string Sequence
         string Zenuml
     }
     MermaidTheme {
@@ -27,6 +28,8 @@ erDiagram
     ClassDiagramEmitter {
     }
     ErDiagramEmitter {
+    }
+    SequenceEmitter {
     }
     ZenumlEmitter {
     }
@@ -110,6 +113,7 @@ erDiagram
     DiagramArg {
         string Class
         string Er
+        string Sequence
         string Zenuml
     }
     LanguageArg {
@@ -126,11 +130,12 @@ erDiagram
         PathBuf output
         String theme
     }
-    RustParser ||--|| LanguageParser : "implements"
     GoParser ||--|| LanguageParser : "implements"
     TypeScriptParser ||--|| LanguageParser : "implements"
+    RustParser ||--|| LanguageParser : "implements"
     ClassDiagramEmitter ||--|| DiagramEmitter : "implements"
     ErDiagramEmitter ||--|| DiagramEmitter : "implements"
+    SequenceEmitter ||--|| DiagramEmitter : "implements"
     ZenumlEmitter ||--|| DiagramEmitter : "implements"
     CodeModel ||--|{ Entity : "entities"
     CodeModel ||--|{ Function : "functions"

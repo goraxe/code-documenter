@@ -1,14 +1,4 @@
----
-config:
-  theme: 'base'
-  themeVariables:
-    primaryColor: '#BB2528'
-    primaryTextColor: '#fff'
-    primaryBorderColor: '#7C0000'
-    lineColor: '#F8B229'
-    secondaryColor: '#006100'
-    tertiaryColor: '#fff'
----
+%%{init: {'theme':'neutral'}}%%
 classDiagram
     class LanguageParser {
         <<Interface>>
@@ -20,15 +10,15 @@ classDiagram
         Go
         TypeScript
     }
-    class RustParser {
-        <<Struct>>
-        -parse_file(path Path, source str) Result~CodeModel~
-    }
     class GoParser {
         <<Struct>>
         -parse_file(path Path, source str) Result~CodeModel~
     }
     class TypeScriptParser {
+        <<Struct>>
+        -parse_file(path Path, source str) Result~CodeModel~
+    }
+    class RustParser {
         <<Struct>>
         -parse_file(path Path, source str) Result~CodeModel~
     }
@@ -40,6 +30,7 @@ classDiagram
         <<Enumeration>>
         Class
         Er
+        Sequence
         Zenuml
     }
     class MermaidTheme {
@@ -63,6 +54,12 @@ classDiagram
         -emit_field(output String, field Field, is_enum bool)$
         -cardinality_notation(cardinality Cardinality) str$
         -emit_relationship(output String, rel Relationship)$
+        -emit(model CodeModel, theme MermaidTheme) String
+    }
+    class SequenceEmitter {
+        <<Struct>>
+        -format_message(call crate::model::CallExpr) String$
+        -emit_calls(output String, caller str, func Function, all_functions [Function], visited HashSet~String~)$
         -emit(model CodeModel, theme MermaidTheme) String
     }
     class ZenumlEmitter {
@@ -169,6 +166,7 @@ classDiagram
         <<Enumeration>>
         Class
         Er
+        Sequence
         Zenuml
     }
     class LanguageArg {
@@ -187,11 +185,12 @@ classDiagram
         -PathBuf output
         -String theme
     }
-    RustParser ..|> LanguageParser
     GoParser ..|> LanguageParser
     TypeScriptParser ..|> LanguageParser
+    RustParser ..|> LanguageParser
     ClassDiagramEmitter ..|> DiagramEmitter
     ErDiagramEmitter ..|> DiagramEmitter
+    SequenceEmitter ..|> DiagramEmitter
     ZenumlEmitter ..|> DiagramEmitter
     CodeModel *-- Entity : entities
     CodeModel *-- Function : functions

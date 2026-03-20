@@ -1,0 +1,75 @@
+%%{init: {'theme':'neutral'}}%%
+sequenceDiagram
+    participant detect_language
+    participant path
+    participant Some
+    participant get_parser
+    participant Box
+    participant get_emitter
+    participant run
+    participant CodeModel
+    participant parse_single_file
+    participant merged
+    participant WalkDir
+    participant e
+    participant entry
+    participant parse
+    participant emit
+    participant Ok
+    participant emitter
+    Note over detect_language: detect_language
+    detect_language->>path:extension()
+    detect_language->>Some:Some()
+    detect_language->>Some:Some()
+    detect_language->>Some:Some()
+    Note over get_parser: get_parser
+    get_parser->>Box:new()
+    get_parser->>Box:new()
+    get_parser->>Box:new()
+    Note over get_emitter: get_emitter
+    get_emitter->>Box:new()
+    get_emitter->>Box:new()
+    get_emitter->>Box:new()
+    get_emitter->>Box:new()
+    Note over run: run
+    run->>CodeModel:new()
+    run->>path:is_file()
+    run->>parse_single_file:parse_single_file(path, language)
+    activate parse_single_file
+    parse_single_file->>language:or_else()
+    parse_single_file->>parse:detect_language(path)
+    activate parse
+    parse->>path:extension()
+    parse->>Some:Some()
+    parse->>Some:Some()
+    parse->>Some:Some()
+    deactivate parse
+    parse_single_file->>std::fs:read_to_string(path)
+    parse_single_file->>parse:get_parser(lang)
+    activate parse
+    parse->>Box:new()
+    parse->>Box:new()
+    parse->>Box:new()
+    deactivate parse
+    parse_single_file->>parser:parse_file(path, source)
+    deactivate parse_single_file
+    run->>merged:merge(model)
+    run->>path:is_dir()
+    run->>WalkDir:new(path)
+    run->>e:ok()
+    run->>e:file_type()
+    run->>entry:path()
+    run->>Some:Some(l)
+    run->>parse:detect_language(file_path)
+    run->>parse_single_file:parse_single_file(file_path)
+    run->>Some:Some(lang)
+    run->>merged:merge(model)
+    run->>emit:get_emitter(diagram_type)
+    activate emit
+    emit->>Box:new()
+    emit->>Box:new()
+    emit->>Box:new()
+    emit->>Box:new()
+    deactivate emit
+    run->>Ok:Ok()
+    run->>emitter:emit(merged, theme)
