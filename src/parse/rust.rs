@@ -370,62 +370,94 @@ fn collect_call_exprs(node: &Node, source: &str, calls: &mut Vec<CallExpr>) {
     }
 }
 
+/// Returns true if `name` looks like a valid identifier for ZenUML output
+/// (alphanumeric + underscores, no operators, no complex expressions).
+fn is_valid_identifier(name: &str) -> bool {
+    !name.is_empty()
+        && name
+            .chars()
+            .all(|c| c.is_alphanumeric() || c == '_' || c == ':')
+}
+
 fn parse_call_expr(node: &Node, source: &str) -> Option<CallExpr> {
     let func_node = node.child_by_field_name("function")?;
-    let arguments = extract_arguments(node, source);
 
     match func_node.kind() {
         "field_expression" => {
             // e.g., `receiver.method(args)`
-            let receiver = func_node
-                .child_by_field_name("value")
-                .map(|n| node_text(&n, source));
-            let method = func_node
-                .child_by_field_name("field")
-                .map(|n| node_text(&n, source))
-                .unwrap_or_default();
+            let receiver_node = func_node.child_by_field_name("value")?;
+            let method_node = func_node.child_by_field_name("field")?;
+            let receiver = node_text(&receiver_node, source);
+            let method = node_text(&method_node, source);
+
+            // Only keep if receiver is a simple identifier (not a complex expression)
+            if !is_valid_identifier(&method) {
+                return None;
+            }
+            // Simplify chained receivers like `self.field` to just the last part
+            let receiver = if let Some((_prefix, last)) = receiver.rsplit_once('.') {
+                last.to_string()
+            } else {
+                receiver
+            };
+            if !is_valid_identifier(&receiver) {
+                return None;
+            }
+
             Some(CallExpr {
-                receiver,
+                receiver: Some(receiver),
                 method,
-                arguments,
+                arguments: extract_argument_names(node, source),
             })
         }
-        "scoped_identifier" | "identifier" => {
+        "scoped_identifier" => {
             let text = node_text(&func_node, source);
-            // For scoped identifiers like `Foo::bar`, split into receiver and method.
-            if let Some((recv, method)) = text.rsplit_once("::") {
-                Some(CallExpr {
-                    receiver: Some(recv.to_string()),
-                    method: method.to_string(),
-                    arguments,
-                })
-            } else {
-                Some(CallExpr {
-                    receiver: None,
-                    method: text,
-                    arguments,
-                })
+            // e.g., `Foo::bar` -> receiver=Foo, method=bar
+            let (recv, method) = text.rsplit_once("::")?;
+            if !is_valid_identifier(recv) || !is_valid_identifier(method) {
+                return None;
             }
+            Some(CallExpr {
+                receiver: Some(recv.to_string()),
+                method: method.to_string(),
+                arguments: extract_argument_names(node, source),
+            })
         }
-        _ => {
-            let text = node_text(&func_node, source);
+        "identifier" => {
+            let name = node_text(&func_node, source);
+            if !is_valid_identifier(&name) {
+                return None;
+            }
             Some(CallExpr {
                 receiver: None,
-                method: text,
-                arguments,
+                method: name,
+                arguments: extract_argument_names(node, source),
             })
         }
+        // Skip anything else (closures, complex expressions, macro-like calls)
+        _ => None,
     }
 }
 
-fn extract_arguments(node: &Node, source: &str) -> Vec<String> {
+/// Extract simplified argument names — only keep simple identifiers, skip complex expressions.
+fn extract_argument_names(node: &Node, source: &str) -> Vec<String> {
     let mut args = Vec::new();
     if let Some(arg_list) = node.child_by_field_name("arguments") {
         let mut cursor = arg_list.walk();
         for child in arg_list.children(&mut cursor) {
-            // Skip punctuation and delimiters.
-            if child.kind() != "(" && child.kind() != ")" && child.kind() != "," {
-                args.push(node_text(&child, source));
+            match child.kind() {
+                "(" | ")" | "," => {}
+                "identifier" => args.push(node_text(&child, source)),
+                "reference_expression" => {
+                    // &foo -> just "foo"
+                    if let Some(inner) = child.child_by_field_name("value") {
+                        if inner.kind() == "identifier" {
+                            args.push(node_text(&inner, source));
+                        }
+                    }
+                }
+                // For complex args, just use a placeholder
+                _ => args.push("...".to_string()),
             }
         }
     }

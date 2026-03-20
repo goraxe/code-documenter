@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::model::{CodeModel, Function};
 
 use super::{DiagramEmitter, MermaidTheme};
@@ -5,39 +7,47 @@ use super::{DiagramEmitter, MermaidTheme};
 pub struct ZenumlEmitter;
 
 impl ZenumlEmitter {
-    fn emit_function(output: &mut String, func: &Function, all_functions: &[Function]) {
-        if func.calls.is_empty() {
-            return;
+    fn format_call(call: &crate::model::CallExpr) -> String {
+        let args_str = call
+            .arguments
+            .iter()
+            .filter(|a| *a != "...")
+            .cloned()
+            .collect::<Vec<_>>()
+            .join(", ");
+        match &call.receiver {
+            Some(receiver) => format!("{}.{}({})", receiver, call.method, args_str),
+            None => format!("{}({})", call.method, args_str),
         }
+    }
 
+    fn emit_calls(
+        output: &mut String,
+        func: &Function,
+        all_functions: &[Function],
+        visited: &mut HashSet<String>,
+        indent: usize,
+    ) {
+        let pad = "    ".repeat(indent);
         for call in &func.calls {
-            let args_str = call.arguments.join(", ");
-            let call_str = match &call.receiver {
-                Some(receiver) => format!("{}.{}({})", receiver, call.method, args_str),
-                None => format!("{}({})", call.method, args_str),
+            let call_str = Self::format_call(call);
+
+            // Try to resolve the called method to a known function for nesting
+            let nested_func = if !visited.contains(&call.method) {
+                all_functions
+                    .iter()
+                    .find(|f| f.name == call.method && !f.calls.is_empty())
+            } else {
+                None
             };
 
-            // Check if the called method maps to a known function with calls
-            let nested_func = all_functions.iter().find(|f| {
-                f.name == call.method && !f.calls.is_empty()
-            });
-
             if let Some(nested) = nested_func {
-                output.push_str(&format!("    {} {{\n", call_str));
-                for nested_call in &nested.calls {
-                    let nested_args = nested_call.arguments.join(", ");
-                    let nested_call_str = match &nested_call.receiver {
-                        Some(receiver) => {
-                            format!("        {}.{}({})", receiver, nested_call.method, nested_args)
-                        }
-                        None => format!("        {}({})", nested_call.method, nested_args),
-                    };
-                    output.push_str(&nested_call_str);
-                    output.push('\n');
-                }
-                output.push_str("    }\n");
+                visited.insert(call.method.clone());
+                output.push_str(&format!("{}{} {{\n", pad, call_str));
+                Self::emit_calls(output, nested, all_functions, visited, indent + 1);
+                output.push_str(&format!("{}}}\n", pad));
             } else {
-                output.push_str(&format!("    {}\n", call_str));
+                output.push_str(&format!("{}{}\n", pad, call_str));
             }
         }
     }
@@ -48,8 +58,31 @@ impl DiagramEmitter for ZenumlEmitter {
         let mut output = theme.directive();
         output.push_str("zenuml\n");
 
-        for func in &model.functions {
-            Self::emit_function(&mut output, func, &model.functions);
+        // Only emit public functions that have calls (they represent interesting interactions).
+        // Private helpers are included as nested calls when referenced, but not as top-level entries.
+        let interesting: Vec<&Function> = model
+            .functions
+            .iter()
+            .filter(|f| {
+                !f.calls.is_empty()
+                    && matches!(
+                        f.visibility,
+                        crate::model::Visibility::Public | crate::model::Visibility::Internal
+                    )
+            })
+            .collect();
+
+        if interesting.is_empty() {
+            return output;
+        }
+
+        // Emit each top-level function as a scoped interaction
+        for func in &interesting {
+            let mut visited = HashSet::new();
+            visited.insert(func.name.clone());
+
+            output.push_str(&format!("    // {}\n", func.name));
+            Self::emit_calls(&mut output, func, &model.functions, &mut visited, 1);
         }
 
         output
@@ -97,6 +130,7 @@ mod tests {
 
         let result = emitter.emit(&model, &MermaidTheme::Default);
         assert!(result.starts_with("zenuml\n"));
+        assert!(result.contains("// main"));
         assert!(result.contains("initialize()"));
         assert!(result.contains("run(config)"));
     }

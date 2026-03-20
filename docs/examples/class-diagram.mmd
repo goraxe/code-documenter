@@ -67,7 +67,8 @@ classDiagram
     }
     class ZenumlEmitter {
         <<Struct>>
-        -emit_function(output String, func Function, all_functions [Function])$
+        -format_call(call crate::model::CallExpr) String$
+        -emit_calls(output String, func Function, all_functions [Function], visited HashSet~String~, indent usize)$
         -emit(model CodeModel, theme MermaidTheme) String
     }
     class CodeModel {
