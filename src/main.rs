@@ -45,6 +45,10 @@ struct Cli {
     /// Mermaid theme (default, neutral, dark, forest, base)
     #[arg(short = 't', long = "theme", default_value = "dark")]
     theme: String,
+
+    /// Output format: mmd (text), svg, png (svg/png require the "render" feature)
+    #[arg(short = 'f', long = "format", default_value = "mmd")]
+    format: String,
 }
 
 fn main() -> Result<()> {
@@ -70,14 +74,55 @@ fn main() -> Result<()> {
         code_documenter::emit::MermaidTheme::Named(cli.theme)
     };
 
-    let result =
+    let mermaid_text =
         code_documenter::run(&cli.path, diagram_type, language, cli.entry.as_deref(), theme)?;
 
-    if let Some(output_path) = cli.output {
-        std::fs::write(&output_path, &result)?;
-        eprintln!("Output written to {}", output_path.display());
-    } else {
-        print!("{result}");
+    match cli.format.as_str() {
+        "mmd" => {
+            if let Some(output_path) = cli.output {
+                std::fs::write(&output_path, &mermaid_text)?;
+                eprintln!("Output written to {}", output_path.display());
+            } else {
+                print!("{mermaid_text}");
+            }
+        }
+        #[cfg(feature = "render")]
+        "svg" => {
+            let svg = mermaid_rs_renderer::render(&mermaid_text)
+                .map_err(|e| anyhow::anyhow!("SVG render failed: {e}"))?;
+            if let Some(output_path) = cli.output {
+                std::fs::write(&output_path, &svg)?;
+                eprintln!("Output written to {}", output_path.display());
+            } else {
+                print!("{svg}");
+            }
+        }
+        #[cfg(feature = "render")]
+        "png" => {
+            let output_path = cli
+                .output
+                .ok_or_else(|| anyhow::anyhow!("PNG format requires --output <file>"))?;
+            let svg = mermaid_rs_renderer::render(&mermaid_text)
+                .map_err(|e| anyhow::anyhow!("SVG render failed: {e}"))?;
+            let tree = usvg::Tree::from_str(&svg, &usvg::Options::default())?;
+            let size = tree.size().to_int_size();
+            let mut pixmap =
+                tiny_skia::Pixmap::new(size.width(), size.height())
+                    .ok_or_else(|| anyhow::anyhow!("Failed to create pixmap"))?;
+            resvg::render(&tree, tiny_skia::Transform::default(), &mut pixmap.as_mut());
+            pixmap.save_png(&output_path)?;
+            eprintln!("Output written to {}", output_path.display());
+        }
+        #[cfg(not(feature = "render"))]
+        "svg" | "png" => {
+            anyhow::bail!(
+                "SVG/PNG output requires the 'render' feature.\n\
+                 Rebuild with: cargo install --features render"
+            );
+        }
+        other => {
+            anyhow::bail!("Unknown format '{other}'. Use: mmd, svg, png");
+        }
     }
 
     Ok(())
