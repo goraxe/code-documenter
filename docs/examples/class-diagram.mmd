@@ -1,191 +1,214 @@
 %%{init: {'theme':'dark'}}%%
 classDiagram
-    class LanguageParser {
-        <<Interface>>
-        -parse_file(path Path, source str) Result~CodeModel~*
+    namespace emit {
+        class DiagramEmitter {
+            <<Interface>>
+            -emit(model CodeModel, theme MermaidTheme) String*
+        }
+        class DiagramType {
+            <<Enumeration>>
+            Class
+            Er
+            Sequence
+            Zenuml
+        }
+        class MermaidTheme {
+            <<Enumeration>>
+            Default
+            Named
+            +directive() String
+        }
     }
-    class Language {
-        <<Enumeration>>
-        Rust
-        Go
-        TypeScript
+    namespace emit::class_diagram {
+        class ClassDiagramEmitter {
+            <<Struct>>
+            -namespace_from_path(path str) String$
+            -emit_entity(output String, entity Entity, indent str)$
+            -annotation_for_kind(kind EntityKind) str$
+            -emit_field(output String, field Field, is_enum bool, indent str)$
+            -emit_method(output String, method Method, indent str)$
+            -emit_relationship(output String, rel Relationship)$
+            -emit(model CodeModel, theme MermaidTheme) String
+        }
     }
-    class GoParser {
-        <<Struct>>
-        -parse_file(path Path, source str) Result~CodeModel~
+    namespace emit::er_diagram {
+        class ErDiagramEmitter {
+            <<Struct>>
+            -emit_entity(output String, entity Entity)$
+            -emit_field(output String, field Field, is_enum bool)$
+            -cardinality_notation(cardinality Cardinality) str$
+            -emit_relationship(output String, rel Relationship)$
+            -emit(model CodeModel, theme MermaidTheme) String
+        }
     }
-    class TypeScriptParser {
-        <<Struct>>
-        -parse_file(path Path, source str) Result~CodeModel~
+    namespace emit::sequence {
+        class SequenceEmitter {
+            <<Struct>>
+            -safe_id(name str) String$
+            -format_message(call crate::model::CallExpr) String$
+            -build_known_names(model CodeModel) HashSet~String~$
+            -emit_calls(output String, caller_id str, func Function, all_functions [Function], visited HashSet~String~, id_map HashMap~String, String~, known HashSet~String~)$
+            -emit(model CodeModel, theme MermaidTheme) String
+        }
     }
-    class RustParser {
-        <<Struct>>
-        -parse_file(path Path, source str) Result~CodeModel~
+    namespace emit::zenuml {
+        class ZenumlEmitter {
+            <<Struct>>
+            -format_call(call crate::model::CallExpr) String$
+            -emit_calls(output String, func Function, all_functions [Function], visited HashSet~String~, indent usize)$
+            -emit(model CodeModel, theme MermaidTheme) String
+        }
     }
-    class ClassDiagramEmitter {
-        <<Struct>>
-        -emit_entity(output String, entity Entity)$
-        -annotation_for_kind(kind EntityKind) str$
-        -emit_field(output String, field Field, is_enum bool)$
-        -emit_method(output String, method Method)$
-        -emit_relationship(output String, rel Relationship)$
-        -emit(model CodeModel, theme MermaidTheme) String
+    namespace main {
+        class DiagramArg {
+            <<Enumeration>>
+            Class
+            Er
+            Sequence
+            Zenuml
+        }
+        class LanguageArg {
+            <<Enumeration>>
+            Auto
+            Rust
+            Go
+            TypeScript
+        }
+        class Cli {
+            <<Struct>>
+            -PathBuf path
+            -DiagramArg diagram
+            -LanguageArg language
+            -String entry
+            -PathBuf output
+            -String theme
+        }
     }
-    class ErDiagramEmitter {
-        <<Struct>>
-        -emit_entity(output String, entity Entity)$
-        -emit_field(output String, field Field, is_enum bool)$
-        -cardinality_notation(cardinality Cardinality) str$
-        -emit_relationship(output String, rel Relationship)$
-        -emit(model CodeModel, theme MermaidTheme) String
+    namespace model {
+        class CodeModel {
+            <<Struct>>
+            +List~Entity~ entities
+            +List~Function~ functions
+            +List~Relationship~ relationships
+            +new() Self$
+            +merge(other CodeModel)
+            -default() Self$
+        }
+        class Entity {
+            <<Struct>>
+            +String name
+            +EntityKind kind
+            +List~Field~ fields
+            +List~Method~ methods
+            +String source_file
+        }
+        class EntityKind {
+            <<Enumeration>>
+            Struct
+            Enum
+            Interface
+            Class
+            Trait
+            TypeAlias
+        }
+        class Field {
+            <<Struct>>
+            +String name
+            +TypeInfo type_info
+            +Visibility visibility
+        }
+        class TypeInfo {
+            <<Enumeration>>
+            Simple
+            Generic
+            Optional
+            Collection
+            Tuple
+            Reference
+            +display_name() String
+        }
+        class Method {
+            <<Struct>>
+            +String name
+            +List~Parameter~ parameters
+            +TypeInfo return_type
+            +Visibility visibility
+            +bool is_static
+            +bool is_abstract
+        }
+        class Parameter {
+            <<Struct>>
+            +String name
+            +TypeInfo type_info
+        }
+        class Visibility {
+            <<Enumeration>>
+            Public
+            Private
+            Protected
+            Internal
+            +mermaid_prefix() str
+        }
+        class Function {
+            <<Struct>>
+            +String name
+            +List~Parameter~ parameters
+            +TypeInfo return_type
+            +Visibility visibility
+            +List~CallExpr~ calls
+            +String source_file
+        }
+        class CallExpr {
+            <<Struct>>
+            +String receiver
+            +String method
+            +List~String~ arguments
+        }
+        class Relationship {
+            <<Enumeration>>
+            Inheritance
+            Implementation
+            Composition
+            Aggregation
+            Association
+        }
+        class Cardinality {
+            <<Enumeration>>
+            One
+            ZeroOrOne
+            OneOrMore
+            ZeroOrMore
+        }
     }
-    class DiagramEmitter {
-        <<Interface>>
-        -emit(model CodeModel, theme MermaidTheme) String*
+    namespace parse {
+        class LanguageParser {
+            <<Interface>>
+            -parse_file(path Path, source str) Result~CodeModel~*
+        }
+        class Language {
+            <<Enumeration>>
+            Rust
+            Go
+            TypeScript
+        }
     }
-    class DiagramType {
-        <<Enumeration>>
-        Class
-        Er
-        Sequence
-        Zenuml
+    namespace parse::go {
+        class GoParser {
+            <<Struct>>
+            -parse_file(path Path, source str) Result~CodeModel~
+        }
     }
-    class MermaidTheme {
-        <<Enumeration>>
-        Default
-        Named
-        +directive() String
+    namespace parse::rust {
+        class RustParser {
+            <<Struct>>
+            -parse_file(path Path, source str) Result~CodeModel~
+        }
     }
-    class ZenumlEmitter {
-        <<Struct>>
-        -format_call(call crate::model::CallExpr) String$
-        -emit_calls(output String, func Function, all_functions [Function], visited HashSet~String~, indent usize)$
-        -emit(model CodeModel, theme MermaidTheme) String
-    }
-    class SequenceEmitter {
-        <<Struct>>
-        -safe_id(name str) String$
-        -format_message(call crate::model::CallExpr) String$
-        -build_known_names(model CodeModel) HashSet~String~$
-        -emit_calls(output String, caller_id str, func Function, all_functions [Function], visited HashSet~String~, id_map HashMap~String, String~, known HashSet~String~)$
-        -emit(model CodeModel, theme MermaidTheme) String
-    }
-    class CodeModel {
-        <<Struct>>
-        +List~Entity~ entities
-        +List~Function~ functions
-        +List~Relationship~ relationships
-        +new() Self$
-        +merge(other CodeModel)
-        -default() Self$
-    }
-    class Entity {
-        <<Struct>>
-        +String name
-        +EntityKind kind
-        +List~Field~ fields
-        +List~Method~ methods
-        +String source_file
-    }
-    class EntityKind {
-        <<Enumeration>>
-        Struct
-        Enum
-        Interface
-        Class
-        Trait
-        TypeAlias
-    }
-    class Field {
-        <<Struct>>
-        +String name
-        +TypeInfo type_info
-        +Visibility visibility
-    }
-    class TypeInfo {
-        <<Enumeration>>
-        Simple
-        Generic
-        Optional
-        Collection
-        Tuple
-        Reference
-        +display_name() String
-    }
-    class Method {
-        <<Struct>>
-        +String name
-        +List~Parameter~ parameters
-        +TypeInfo return_type
-        +Visibility visibility
-        +bool is_static
-        +bool is_abstract
-    }
-    class Parameter {
-        <<Struct>>
-        +String name
-        +TypeInfo type_info
-    }
-    class Visibility {
-        <<Enumeration>>
-        Public
-        Private
-        Protected
-        Internal
-        +mermaid_prefix() str
-    }
-    class Function {
-        <<Struct>>
-        +String name
-        +List~Parameter~ parameters
-        +TypeInfo return_type
-        +Visibility visibility
-        +List~CallExpr~ calls
-        +String source_file
-    }
-    class CallExpr {
-        <<Struct>>
-        +String receiver
-        +String method
-        +List~String~ arguments
-    }
-    class Relationship {
-        <<Enumeration>>
-        Inheritance
-        Implementation
-        Composition
-        Aggregation
-        Association
-    }
-    class Cardinality {
-        <<Enumeration>>
-        One
-        ZeroOrOne
-        OneOrMore
-        ZeroOrMore
-    }
-    class DiagramArg {
-        <<Enumeration>>
-        Class
-        Er
-        Sequence
-        Zenuml
-    }
-    class LanguageArg {
-        <<Enumeration>>
-        Auto
-        Rust
-        Go
-        TypeScript
-    }
-    class Cli {
-        <<Struct>>
-        -PathBuf path
-        -DiagramArg diagram
-        -LanguageArg language
-        -String entry
-        -PathBuf output
-        -String theme
+    namespace parse::typescript {
+        class TypeScriptParser {
+            <<Struct>>
+            -parse_file(path Path, source str) Result~CodeModel~
+        }
     }
     GoParser ..|> LanguageParser
     TypeScriptParser ..|> LanguageParser

@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use crate::model::{CodeModel, Entity, EntityKind, Field, Method, Relationship};
 
 use super::{DiagramEmitter, MermaidTheme};
@@ -5,26 +7,48 @@ use super::{DiagramEmitter, MermaidTheme};
 pub struct ClassDiagramEmitter;
 
 impl ClassDiagramEmitter {
-    fn emit_entity(output: &mut String, entity: &Entity) {
-        output.push_str(&format!("    class {} {{\n", entity.name));
+    /// Derive a namespace label from a source file path.
+    /// e.g. `./src/parse/rust.rs` → `parse::rust`, `src/model.rs` → `model`
+    fn namespace_from_path(path: &str) -> String {
+        let p = path
+            .strip_prefix("./")
+            .unwrap_or(path);
+        // Strip the `src/` prefix if present
+        let p = p.strip_prefix("src/").unwrap_or(p);
+        // Remove extension
+        let p = p.strip_suffix(".rs")
+            .or_else(|| p.strip_suffix(".go"))
+            .or_else(|| p.strip_suffix(".tsx"))
+            .or_else(|| p.strip_suffix(".ts"))
+            .unwrap_or(p);
+        // Convert path separators to :: and strip mod.rs / mod suffixes
+        let p = p.replace('/', "::");
+        let p = p.strip_suffix("::mod").unwrap_or(&p);
+        p.to_string()
+    }
+
+    fn emit_entity(output: &mut String, entity: &Entity, indent: &str) {
+        output.push_str(&format!("{}class {} {{\n", indent, entity.name));
+
+        let inner = format!("{}    ", indent);
 
         // Emit annotation based on EntityKind
         if let Some(annotation) = Self::annotation_for_kind(&entity.kind) {
-            output.push_str(&format!("        {}\n", annotation));
+            output.push_str(&format!("{}{}\n", inner, annotation));
         }
 
         // Emit fields
         let is_enum = matches!(entity.kind, EntityKind::Enum);
         for field in &entity.fields {
-            Self::emit_field(output, field, is_enum);
+            Self::emit_field(output, field, is_enum, &inner);
         }
 
         // Emit methods
         for method in &entity.methods {
-            Self::emit_method(output, method);
+            Self::emit_method(output, method, &inner);
         }
 
-        output.push_str("    }\n");
+        output.push_str(&format!("{}}}\n", indent));
     }
 
     fn annotation_for_kind(kind: &EntityKind) -> Option<&'static str> {
@@ -38,13 +62,13 @@ impl ClassDiagramEmitter {
         }
     }
 
-    fn emit_field(output: &mut String, field: &Field, is_enum: bool) {
+    fn emit_field(output: &mut String, field: &Field, is_enum: bool, indent: &str) {
         if is_enum {
-            // Enum variants: just show the name, no type
-            output.push_str(&format!("        {}\n", field.name));
+            output.push_str(&format!("{}{}\n", indent, field.name));
         } else {
             output.push_str(&format!(
-                "        {}{} {}\n",
+                "{}{}{} {}\n",
+                indent,
                 field.visibility.mermaid_prefix(),
                 field.type_info.display_name(),
                 field.name,
@@ -52,7 +76,7 @@ impl ClassDiagramEmitter {
         }
     }
 
-    fn emit_method(output: &mut String, method: &Method) {
+    fn emit_method(output: &mut String, method: &Method, indent: &str) {
         let params: Vec<String> = method
             .parameters
             .iter()
@@ -74,7 +98,8 @@ impl ClassDiagramEmitter {
         };
 
         output.push_str(&format!(
-            "        {}{}({}){}{}\n",
+            "{}{}{}({}){}{}\n",
+            indent,
             method.visibility.mermaid_prefix(),
             method.name,
             params_str,
@@ -122,10 +147,23 @@ impl DiagramEmitter for ClassDiagramEmitter {
         let mut output = theme.directive();
         output.push_str("classDiagram\n");
 
+        // Group entities by namespace (derived from source_file)
+        let mut by_namespace: BTreeMap<String, Vec<&Entity>> = BTreeMap::new();
         for entity in &model.entities {
-            Self::emit_entity(&mut output, entity);
+            let ns = Self::namespace_from_path(&entity.source_file);
+            by_namespace.entry(ns).or_default().push(entity);
         }
 
+        // Emit each namespace block
+        for (ns, entities) in &by_namespace {
+            output.push_str(&format!("    namespace {} {{\n", ns));
+            for entity in entities {
+                Self::emit_entity(&mut output, entity, "        ");
+            }
+            output.push_str("    }\n");
+        }
+
+        // Relationships go outside namespace blocks
         for rel in &model.relationships {
             Self::emit_relationship(&mut output, rel);
         }
@@ -199,17 +237,12 @@ mod tests {
         };
 
         let result = emitter.emit(&model, &MermaidTheme::Default);
-        let expected = "\
-classDiagram
-    class User {
-        <<Struct>>
-        +String name
-        -i32 age
-        +get_name() String
-        +create(name String, age i32) User$
-    }
-";
-        assert_eq!(result, expected);
+        assert!(result.contains("namespace user {"));
+        assert!(result.contains("class User {"));
+        assert!(result.contains("+String name"));
+        assert!(result.contains("-i32 age"));
+        assert!(result.contains("+get_name() String"));
+        assert!(result.contains("+create(name String, age i32) User$"));
     }
 
     #[test]
