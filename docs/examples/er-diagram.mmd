@@ -2,9 +2,9 @@ erDiagram
     LanguageParser {
     }
     Language {
-        () Rust
-        () Go
-        () TypeScript
+        string Rust
+        string Go
+        string TypeScript
     }
     RustParser {
     }
@@ -15,9 +15,9 @@ erDiagram
     DiagramEmitter {
     }
     DiagramType {
-        () Class
-        () Er
-        () Zenuml
+        string Class
+        string Er
+        string Zenuml
     }
     ClassDiagramEmitter {
     }
@@ -38,12 +38,12 @@ erDiagram
         String source_file
     }
     EntityKind {
-        () Struct
-        () Enum
-        () Interface
-        () Class
-        () Trait
-        () TypeAlias
+        string Struct
+        string Enum
+        string Interface
+        string Class
+        string Trait
+        string TypeAlias
     }
     Field {
         String name
@@ -51,12 +51,12 @@ erDiagram
         Visibility visibility
     }
     TypeInfo {
-        () Simple
-        () Generic
-        () Optional
-        () Collection
-        () Tuple
-        () Reference
+        string Simple
+        string Generic
+        string Optional
+        string Collection
+        string Tuple
+        string Reference
     }
     Method {
         String name
@@ -71,10 +71,10 @@ erDiagram
         TypeInfo type_info
     }
     Visibility {
-        () Public
-        () Private
-        () Protected
-        () Internal
+        string Public
+        string Private
+        string Protected
+        string Internal
     }
     Function {
         String name
@@ -90,28 +90,28 @@ erDiagram
         List~String~ arguments
     }
     Relationship {
-        () Inheritance
-        () Implementation
-        () Composition
-        () Aggregation
-        () Association
+        string Inheritance
+        string Implementation
+        string Composition
+        string Aggregation
+        string Association
     }
     Cardinality {
-        () One
-        () ZeroOrOne
-        () OneOrMore
-        () ZeroOrMore
+        string One
+        string ZeroOrOne
+        string OneOrMore
+        string ZeroOrMore
     }
     DiagramArg {
-        () Class
-        () Er
-        () Zenuml
+        string Class
+        string Er
+        string Zenuml
     }
     LanguageArg {
-        () Auto
-        () Rust
-        () Go
-        () TypeScript
+        string Auto
+        string Rust
+        string Go
+        string TypeScript
     }
     Cli {
         PathBuf path

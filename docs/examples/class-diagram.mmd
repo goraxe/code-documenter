@@ -5,9 +5,9 @@ classDiagram
     }
     class Language {
         <<Enumeration>>
-        +() Rust
-        +() Go
-        +() TypeScript
+        Rust
+        Go
+        TypeScript
     }
     class RustParser {
         <<Struct>>
@@ -27,15 +27,15 @@ classDiagram
     }
     class DiagramType {
         <<Enumeration>>
-        +() Class
-        +() Er
-        +() Zenuml
+        Class
+        Er
+        Zenuml
     }
     class ClassDiagramEmitter {
         <<Struct>>
         -emit_entity(output String, entity Entity)$
         -annotation_for_kind(kind EntityKind) str$
-        -emit_field(output String, field Field)$
+        -emit_field(output String, field Field, is_enum bool)$
         -emit_method(output String, method Method)$
         -emit_relationship(output String, rel Relationship)$
         -emit(model CodeModel) String
@@ -43,7 +43,7 @@ classDiagram
     class ErDiagramEmitter {
         <<Struct>>
         -emit_entity(output String, entity Entity)$
-        -emit_field(output String, field Field)$
+        -emit_field(output String, field Field, is_enum bool)$
         -cardinality_notation(cardinality Cardinality) str$
         -emit_relationship(output String, rel Relationship)$
         -emit(model CodeModel) String
@@ -72,12 +72,12 @@ classDiagram
     }
     class EntityKind {
         <<Enumeration>>
-        +() Struct
-        +() Enum
-        +() Interface
-        +() Class
-        +() Trait
-        +() TypeAlias
+        Struct
+        Enum
+        Interface
+        Class
+        Trait
+        TypeAlias
     }
     class Field {
         <<Struct>>
@@ -87,12 +87,12 @@ classDiagram
     }
     class TypeInfo {
         <<Enumeration>>
-        +() Simple
-        +() Generic
-        +() Optional
-        +() Collection
-        +() Tuple
-        +() Reference
+        Simple
+        Generic
+        Optional
+        Collection
+        Tuple
+        Reference
         +display_name() String
     }
     class Method {
@@ -111,10 +111,10 @@ classDiagram
     }
     class Visibility {
         <<Enumeration>>
-        +() Public
-        +() Private
-        +() Protected
-        +() Internal
+        Public
+        Private
+        Protected
+        Internal
         +mermaid_prefix() str
     }
     class Function {
@@ -134,31 +134,31 @@ classDiagram
     }
     class Relationship {
         <<Enumeration>>
-        +() Inheritance
-        +() Implementation
-        +() Composition
-        +() Aggregation
-        +() Association
+        Inheritance
+        Implementation
+        Composition
+        Aggregation
+        Association
     }
     class Cardinality {
         <<Enumeration>>
-        +() One
-        +() ZeroOrOne
-        +() OneOrMore
-        +() ZeroOrMore
+        One
+        ZeroOrOne
+        OneOrMore
+        ZeroOrMore
     }
     class DiagramArg {
         <<Enumeration>>
-        +() Class
-        +() Er
-        +() Zenuml
+        Class
+        Er
+        Zenuml
     }
     class LanguageArg {
         <<Enumeration>>
-        +() Auto
-        +() Rust
-        +() Go
-        +() TypeScript
+        Auto
+        Rust
+        Go
+        TypeScript
     }
     class Cli {
         <<Struct>>

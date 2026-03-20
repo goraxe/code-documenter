@@ -14,8 +14,9 @@ impl ClassDiagramEmitter {
         }
 
         // Emit fields
+        let is_enum = matches!(entity.kind, EntityKind::Enum);
         for field in &entity.fields {
-            Self::emit_field(output, field);
+            Self::emit_field(output, field, is_enum);
         }
 
         // Emit methods
@@ -37,13 +38,18 @@ impl ClassDiagramEmitter {
         }
     }
 
-    fn emit_field(output: &mut String, field: &Field) {
-        output.push_str(&format!(
-            "        {}{} {}\n",
-            field.visibility.mermaid_prefix(),
-            field.type_info.display_name(),
-            field.name,
-        ));
+    fn emit_field(output: &mut String, field: &Field, is_enum: bool) {
+        if is_enum {
+            // Enum variants: just show the name, no type
+            output.push_str(&format!("        {}\n", field.name));
+        } else {
+            output.push_str(&format!(
+                "        {}{} {}\n",
+                field.visibility.mermaid_prefix(),
+                field.type_info.display_name(),
+                field.name,
+            ));
+        }
     }
 
     fn emit_method(output: &mut String, method: &Method) {

@@ -8,18 +8,22 @@ impl ErDiagramEmitter {
     fn emit_entity(output: &mut String, entity: &Entity) {
         output.push_str(&format!("    {} {{\n", entity.name));
 
+        let is_enum = matches!(entity.kind, crate::model::EntityKind::Enum);
         for field in &entity.fields {
-            Self::emit_field(output, field);
+            Self::emit_field(output, field, is_enum);
         }
 
         output.push_str("    }\n");
     }
 
-    fn emit_field(output: &mut String, field: &Field) {
+    fn emit_field(output: &mut String, field: &Field, is_enum: bool) {
         let type_name = field.type_info.display_name();
         let field_name = &field.name;
 
-        if field_name == "id" {
+        if is_enum {
+            // Enum variants: just show the name as the attribute type
+            output.push_str(&format!("        string {}\n", field_name));
+        } else if field_name == "id" {
             output.push_str(&format!("        {} {} PK\n", type_name, field_name));
         } else if field_name.ends_with("_id") {
             output.push_str(&format!("        {} {} FK\n", type_name, field_name));
