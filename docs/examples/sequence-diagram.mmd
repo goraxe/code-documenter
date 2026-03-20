@@ -1,47 +1,23 @@
 %%{init: {'theme':'dark'}}%%
 sequenceDiagram
-    participant detect_language
-    participant path
-    participant get_parser
-    participant get_emitter
     participant run
     participant CodeModel
     participant parse_single_file
-    participant merged
-    participant e
-    participant entry
     participant parse
     participant emit
-    participant emitter
-    Note over detect_language: detect_language
-    detect_language->>path:extension()
-    Note over get_parser: get_parser
-    Note over get_emitter: get_emitter
     Note over run: run
     run->>CodeModel:new()
-    run->>path:is_file()
     run->>parse_single_file:parse_single_file(path, language)
     activate parse_single_file
-    parse_single_file->>language:or_else()
     parse_single_file->>parse:detect_language(path)
     activate parse
-    parse->>path:extension()
     deactivate parse
-    parse_single_file->>std::fs:read_to_string(path)
     parse_single_file->>parse:get_parser(lang)
     activate parse
     deactivate parse
-    parse_single_file->>parser:parse_file(path, source)
     deactivate parse_single_file
-    run->>merged:merge(model)
-    run->>path:is_dir()
-    run->>e:ok()
-    run->>e:file_type()
-    run->>entry:path()
     run->>parse:detect_language(file_path)
     run->>parse_single_file:parse_single_file(file_path)
-    run->>merged:merge(model)
     run->>emit:get_emitter(diagram_type)
     activate emit
     deactivate emit
-    run->>emitter:emit(merged, theme)
