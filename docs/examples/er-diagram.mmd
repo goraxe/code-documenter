@@ -1,0 +1,147 @@
+erDiagram
+    LanguageParser {
+    }
+    Language {
+        () Rust
+        () Go
+        () TypeScript
+    }
+    RustParser {
+    }
+    GoParser {
+    }
+    TypeScriptParser {
+    }
+    DiagramEmitter {
+    }
+    DiagramType {
+        () Class
+        () Er
+        () Zenuml
+    }
+    ClassDiagramEmitter {
+    }
+    ErDiagramEmitter {
+    }
+    ZenumlEmitter {
+    }
+    CodeModel {
+        List~Entity~ entities
+        List~Function~ functions
+        List~Relationship~ relationships
+    }
+    Entity {
+        String name
+        EntityKind kind
+        List~Field~ fields
+        List~Method~ methods
+        String source_file
+    }
+    EntityKind {
+        () Struct
+        () Enum
+        () Interface
+        () Class
+        () Trait
+        () TypeAlias
+    }
+    Field {
+        String name
+        TypeInfo type_info
+        Visibility visibility
+    }
+    TypeInfo {
+        () Simple
+        () Generic
+        () Optional
+        () Collection
+        () Tuple
+        () Reference
+    }
+    Method {
+        String name
+        List~Parameter~ parameters
+        TypeInfo return_type
+        Visibility visibility
+        bool is_static
+        bool is_abstract
+    }
+    Parameter {
+        String name
+        TypeInfo type_info
+    }
+    Visibility {
+        () Public
+        () Private
+        () Protected
+        () Internal
+    }
+    Function {
+        String name
+        List~Parameter~ parameters
+        TypeInfo return_type
+        Visibility visibility
+        List~CallExpr~ calls
+        String source_file
+    }
+    CallExpr {
+        String receiver
+        String method
+        List~String~ arguments
+    }
+    Relationship {
+        () Inheritance
+        () Implementation
+        () Composition
+        () Aggregation
+        () Association
+    }
+    Cardinality {
+        () One
+        () ZeroOrOne
+        () OneOrMore
+        () ZeroOrMore
+    }
+    DiagramArg {
+        () Class
+        () Er
+        () Zenuml
+    }
+    LanguageArg {
+        () Auto
+        () Rust
+        () Go
+        () TypeScript
+    }
+    Cli {
+        PathBuf path
+        DiagramArg diagram
+        LanguageArg language
+        String entry
+        PathBuf output
+    }
+    RustParser ||--|| LanguageParser : "implements"
+    GoParser ||--|| LanguageParser : "implements"
+    TypeScriptParser ||--|| LanguageParser : "implements"
+    ClassDiagramEmitter ||--|| DiagramEmitter : "implements"
+    ErDiagramEmitter ||--|| DiagramEmitter : "implements"
+    ZenumlEmitter ||--|| DiagramEmitter : "implements"
+    CodeModel ||--|{ Entity : "entities"
+    CodeModel ||--|{ Function : "functions"
+    CodeModel ||--|{ Relationship : "relationships"
+    Entity ||--|| EntityKind : "kind"
+    Entity ||--|{ Field : "fields"
+    Entity ||--|{ Method : "methods"
+    Field ||--|| TypeInfo : "type_info"
+    Field ||--|| Visibility : "visibility"
+    Method ||--|{ Parameter : "parameters"
+    Method ||--o| TypeInfo : "return_type"
+    Method ||--|| Visibility : "visibility"
+    Parameter ||--|| TypeInfo : "type_info"
+    Function ||--|{ Parameter : "parameters"
+    Function ||--o| TypeInfo : "return_type"
+    Function ||--|| Visibility : "visibility"
+    Function ||--|{ CallExpr : "calls"
+    CodeModel ||--|| Default : "implements"
+    Cli ||--|| DiagramArg : "diagram"
+    Cli ||--|| LanguageArg : "language"

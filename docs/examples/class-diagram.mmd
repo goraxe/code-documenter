@@ -1,0 +1,195 @@
+classDiagram
+    class LanguageParser {
+        <<Interface>>
+        -parse_file(path Path, source str) Result~CodeModel~*
+    }
+    class Language {
+        <<Enumeration>>
+        +() Rust
+        +() Go
+        +() TypeScript
+    }
+    class RustParser {
+        <<Struct>>
+        -parse_file(path Path, source str) Result~CodeModel~
+    }
+    class GoParser {
+        <<Struct>>
+        -parse_file(path Path, source str) Result~CodeModel~
+    }
+    class TypeScriptParser {
+        <<Struct>>
+        -parse_file(path Path, source str) Result~CodeModel~
+    }
+    class DiagramEmitter {
+        <<Interface>>
+        -emit(model CodeModel) String*
+    }
+    class DiagramType {
+        <<Enumeration>>
+        +() Class
+        +() Er
+        +() Zenuml
+    }
+    class ClassDiagramEmitter {
+        <<Struct>>
+        -emit_entity(output String, entity Entity)$
+        -annotation_for_kind(kind EntityKind) str$
+        -emit_field(output String, field Field)$
+        -emit_method(output String, method Method)$
+        -emit_relationship(output String, rel Relationship)$
+        -emit(model CodeModel) String
+    }
+    class ErDiagramEmitter {
+        <<Struct>>
+        -emit_entity(output String, entity Entity)$
+        -emit_field(output String, field Field)$
+        -cardinality_notation(cardinality Cardinality) str$
+        -emit_relationship(output String, rel Relationship)$
+        -emit(model CodeModel) String
+    }
+    class ZenumlEmitter {
+        <<Struct>>
+        -emit_function(output String, func Function, all_functions [Function])$
+        -emit(model CodeModel) String
+    }
+    class CodeModel {
+        <<Struct>>
+        +List~Entity~ entities
+        +List~Function~ functions
+        +List~Relationship~ relationships
+        +new() Self$
+        +merge(other CodeModel)
+        -default() Self$
+    }
+    class Entity {
+        <<Struct>>
+        +String name
+        +EntityKind kind
+        +List~Field~ fields
+        +List~Method~ methods
+        +String source_file
+    }
+    class EntityKind {
+        <<Enumeration>>
+        +() Struct
+        +() Enum
+        +() Interface
+        +() Class
+        +() Trait
+        +() TypeAlias
+    }
+    class Field {
+        <<Struct>>
+        +String name
+        +TypeInfo type_info
+        +Visibility visibility
+    }
+    class TypeInfo {
+        <<Enumeration>>
+        +() Simple
+        +() Generic
+        +() Optional
+        +() Collection
+        +() Tuple
+        +() Reference
+        +display_name() String
+    }
+    class Method {
+        <<Struct>>
+        +String name
+        +List~Parameter~ parameters
+        +TypeInfo return_type
+        +Visibility visibility
+        +bool is_static
+        +bool is_abstract
+    }
+    class Parameter {
+        <<Struct>>
+        +String name
+        +TypeInfo type_info
+    }
+    class Visibility {
+        <<Enumeration>>
+        +() Public
+        +() Private
+        +() Protected
+        +() Internal
+        +mermaid_prefix() str
+    }
+    class Function {
+        <<Struct>>
+        +String name
+        +List~Parameter~ parameters
+        +TypeInfo return_type
+        +Visibility visibility
+        +List~CallExpr~ calls
+        +String source_file
+    }
+    class CallExpr {
+        <<Struct>>
+        +String receiver
+        +String method
+        +List~String~ arguments
+    }
+    class Relationship {
+        <<Enumeration>>
+        +() Inheritance
+        +() Implementation
+        +() Composition
+        +() Aggregation
+        +() Association
+    }
+    class Cardinality {
+        <<Enumeration>>
+        +() One
+        +() ZeroOrOne
+        +() OneOrMore
+        +() ZeroOrMore
+    }
+    class DiagramArg {
+        <<Enumeration>>
+        +() Class
+        +() Er
+        +() Zenuml
+    }
+    class LanguageArg {
+        <<Enumeration>>
+        +() Auto
+        +() Rust
+        +() Go
+        +() TypeScript
+    }
+    class Cli {
+        <<Struct>>
+        -PathBuf path
+        -DiagramArg diagram
+        -LanguageArg language
+        -String entry
+        -PathBuf output
+    }
+    RustParser ..|> LanguageParser
+    GoParser ..|> LanguageParser
+    TypeScriptParser ..|> LanguageParser
+    ClassDiagramEmitter ..|> DiagramEmitter
+    ErDiagramEmitter ..|> DiagramEmitter
+    ZenumlEmitter ..|> DiagramEmitter
+    CodeModel *-- Entity : entities
+    CodeModel *-- Function : functions
+    CodeModel *-- Relationship : relationships
+    Entity *-- EntityKind : kind
+    Entity *-- Field : fields
+    Entity *-- Method : methods
+    Field *-- TypeInfo : type_info
+    Field *-- Visibility : visibility
+    Method *-- Parameter : parameters
+    Method *-- TypeInfo : return_type
+    Method *-- Visibility : visibility
+    Parameter *-- TypeInfo : type_info
+    Function *-- Parameter : parameters
+    Function *-- TypeInfo : return_type
+    Function *-- Visibility : visibility
+    Function *-- CallExpr : calls
+    CodeModel ..|> Default
+    Cli *-- DiagramArg : diagram
+    Cli *-- LanguageArg : language
