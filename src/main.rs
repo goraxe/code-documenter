@@ -43,7 +43,7 @@ struct Cli {
     output: Option<PathBuf>,
 
     /// Mermaid theme (default, neutral, dark, forest, base)
-    #[arg(short = 't', long = "theme", default_value = "neutral")]
+    #[arg(short = 't', long = "theme", default_value = "dark")]
     theme: String,
 }
 

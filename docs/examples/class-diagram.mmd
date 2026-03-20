@@ -1,4 +1,4 @@
-%%{init: {'theme':'neutral'}}%%
+%%{init: {'theme':'dark'}}%%
 classDiagram
     class LanguageParser {
         <<Interface>>
@@ -22,23 +22,6 @@ classDiagram
         <<Struct>>
         -parse_file(path Path, source str) Result~CodeModel~
     }
-    class DiagramEmitter {
-        <<Interface>>
-        -emit(model CodeModel, theme MermaidTheme) String*
-    }
-    class DiagramType {
-        <<Enumeration>>
-        Class
-        Er
-        Sequence
-        Zenuml
-    }
-    class MermaidTheme {
-        <<Enumeration>>
-        Default
-        Named
-        +directive() String
-    }
     class ClassDiagramEmitter {
         <<Struct>>
         -emit_entity(output String, entity Entity)$
@@ -56,16 +39,35 @@ classDiagram
         -emit_relationship(output String, rel Relationship)$
         -emit(model CodeModel, theme MermaidTheme) String
     }
-    class SequenceEmitter {
-        <<Struct>>
-        -format_message(call crate::model::CallExpr) String$
-        -emit_calls(output String, caller str, func Function, all_functions [Function], visited HashSet~String~)$
-        -emit(model CodeModel, theme MermaidTheme) String
+    class DiagramEmitter {
+        <<Interface>>
+        -emit(model CodeModel, theme MermaidTheme) String*
+    }
+    class DiagramType {
+        <<Enumeration>>
+        Class
+        Er
+        Sequence
+        Zenuml
+    }
+    class MermaidTheme {
+        <<Enumeration>>
+        Default
+        Named
+        +directive() String
     }
     class ZenumlEmitter {
         <<Struct>>
         -format_call(call crate::model::CallExpr) String$
         -emit_calls(output String, func Function, all_functions [Function], visited HashSet~String~, indent usize)$
+        -emit(model CodeModel, theme MermaidTheme) String
+    }
+    class SequenceEmitter {
+        <<Struct>>
+        -safe_id(name str) String$
+        -format_message(call crate::model::CallExpr) String$
+        -build_known_names(model CodeModel) HashSet~String~$
+        -emit_calls(output String, caller_id str, func Function, all_functions [Function], visited HashSet~String~, id_map HashMap~String, String~, known HashSet~String~)$
         -emit(model CodeModel, theme MermaidTheme) String
     }
     class CodeModel {
@@ -190,8 +192,8 @@ classDiagram
     RustParser ..|> LanguageParser
     ClassDiagramEmitter ..|> DiagramEmitter
     ErDiagramEmitter ..|> DiagramEmitter
-    SequenceEmitter ..|> DiagramEmitter
     ZenumlEmitter ..|> DiagramEmitter
+    SequenceEmitter ..|> DiagramEmitter
     CodeModel *-- Entity : entities
     CodeModel *-- Function : functions
     CodeModel *-- Relationship : relationships

@@ -1,4 +1,4 @@
-%%{init: {'theme':'neutral'}}%%
+%%{init: {'theme':'dark'}}%%
 erDiagram
     LanguageParser {
     }
@@ -13,6 +13,10 @@ erDiagram
     }
     RustParser {
     }
+    ClassDiagramEmitter {
+    }
+    ErDiagramEmitter {
+    }
     DiagramEmitter {
     }
     DiagramType {
@@ -25,13 +29,9 @@ erDiagram
         string Default
         string Named
     }
-    ClassDiagramEmitter {
-    }
-    ErDiagramEmitter {
+    ZenumlEmitter {
     }
     SequenceEmitter {
-    }
-    ZenumlEmitter {
     }
     CodeModel {
         List~Entity~ entities
@@ -135,8 +135,8 @@ erDiagram
     RustParser ||--|| LanguageParser : "implements"
     ClassDiagramEmitter ||--|| DiagramEmitter : "implements"
     ErDiagramEmitter ||--|| DiagramEmitter : "implements"
-    SequenceEmitter ||--|| DiagramEmitter : "implements"
     ZenumlEmitter ||--|| DiagramEmitter : "implements"
+    SequenceEmitter ||--|| DiagramEmitter : "implements"
     CodeModel ||--|{ Entity : "entities"
     CodeModel ||--|{ Function : "functions"
     CodeModel ||--|{ Relationship : "relationships"
