@@ -21,9 +21,9 @@ impl ClassDiagramEmitter {
             .or_else(|| p.strip_suffix(".tsx"))
             .or_else(|| p.strip_suffix(".ts"))
             .unwrap_or(p);
-        // Convert path separators to :: and strip mod.rs / mod suffixes
-        let p = p.replace('/', "::");
-        let p = p.strip_suffix("::mod").unwrap_or(&p);
+        // Convert path separators to dots and strip mod suffixes
+        let p = p.replace('/', ".");
+        let p = p.strip_suffix(".mod").unwrap_or(&p);
         p.to_string()
     }
 
@@ -237,7 +237,7 @@ mod tests {
         };
 
         let result = emitter.emit(&model, &MermaidTheme::Default);
-        assert!(result.contains("namespace user {"));
+        assert!(result.contains("namespace user {\n"));
         assert!(result.contains("class User {"));
         assert!(result.contains("+String name"));
         assert!(result.contains("-i32 age"));

@@ -19,7 +19,7 @@ classDiagram
             +directive() String
         }
     }
-    namespace emit::class_diagram {
+    namespace emit.class_diagram {
         class ClassDiagramEmitter {
             <<Struct>>
             -namespace_from_path(path str) String$
@@ -31,7 +31,7 @@ classDiagram
             -emit(model CodeModel, theme MermaidTheme) String
         }
     }
-    namespace emit::er_diagram {
+    namespace emit.er_diagram {
         class ErDiagramEmitter {
             <<Struct>>
             -emit_entity(output String, entity Entity)$
@@ -41,7 +41,7 @@ classDiagram
             -emit(model CodeModel, theme MermaidTheme) String
         }
     }
-    namespace emit::sequence {
+    namespace emit.sequence {
         class SequenceEmitter {
             <<Struct>>
             -safe_id(name str) String$
@@ -51,7 +51,7 @@ classDiagram
             -emit(model CodeModel, theme MermaidTheme) String
         }
     }
-    namespace emit::zenuml {
+    namespace emit.zenuml {
         class ZenumlEmitter {
             <<Struct>>
             -format_call(call crate::model::CallExpr) String$
@@ -192,19 +192,19 @@ classDiagram
             TypeScript
         }
     }
-    namespace parse::go {
+    namespace parse.go {
         class GoParser {
             <<Struct>>
             -parse_file(path Path, source str) Result~CodeModel~
         }
     }
-    namespace parse::rust {
+    namespace parse.rust {
         class RustParser {
             <<Struct>>
             -parse_file(path Path, source str) Result~CodeModel~
         }
     }
-    namespace parse::typescript {
+    namespace parse.typescript {
         class TypeScriptParser {
             <<Struct>>
             -parse_file(path Path, source str) Result~CodeModel~
