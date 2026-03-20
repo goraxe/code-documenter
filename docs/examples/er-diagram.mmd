@@ -1,23 +1,9 @@
 %%{init: {'theme':'dark'}}%%
 erDiagram
-    LanguageParser {
-    }
     Language {
         string Rust
         string Go
         string TypeScript
-    }
-    GoParser {
-    }
-    TypeScriptParser {
-    }
-    RustParser {
-    }
-    ClassDiagramEmitter {
-    }
-    ErDiagramEmitter {
-    }
-    DiagramEmitter {
     }
     DiagramType {
         string Class
@@ -28,10 +14,6 @@ erDiagram
     MermaidTheme {
         string Default
         string Named
-    }
-    ZenumlEmitter {
-    }
-    SequenceEmitter {
     }
     CodeModel {
         List~Entity~ entities
@@ -129,6 +111,7 @@ erDiagram
         String entry
         PathBuf output
         String theme
+        String format
     }
     GoParser ||--|| LanguageParser : "implements"
     TypeScriptParser ||--|| LanguageParser : "implements"

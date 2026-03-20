@@ -101,6 +101,10 @@ impl DiagramEmitter for ErDiagramEmitter {
         output.push_str("erDiagram\n");
 
         for entity in &model.entities {
+            // Skip entities with no fields — they produce empty blocks in ER diagrams
+            if entity.fields.is_empty() {
+                continue;
+            }
             Self::emit_entity(&mut output, entity);
         }
 
