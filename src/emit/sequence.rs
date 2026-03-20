@@ -1,12 +1,38 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use crate::model::{CodeModel, Function};
 
 use super::{DiagramEmitter, MermaidTheme};
 
+/// Standard library / wrapper types that produce noise rather than meaningful interactions.
+/// These are filtered out of sequence diagram output.
+const NOISE_TYPES: &[&str] = &[
+    "Box", "Some", "None", "Ok", "Err", "Vec", "String", "Arc", "Rc", "Option",
+    "Result", "HashMap", "HashSet", "BTreeMap", "BTreeSet", "WalkDir",
+    "PathBuf", "Path", "self",
+];
+
+/// Mermaid sequenceDiagram reserved keywords that cannot be used as bare participant names.
+const RESERVED_KEYWORDS: &[&str] = &[
+    "box", "end", "loop", "alt", "else", "opt", "par", "and", "rect", "note",
+    "activate", "deactivate", "participant", "actor", "critical", "break",
+    "over", "left", "right", "of", "as", "autonumber", "title",
+];
+
 pub struct SequenceEmitter;
 
 impl SequenceEmitter {
+    /// Returns a safe participant ID for use in arrows/activate/deactivate.
+    /// If the name is a reserved keyword, prefix it with `p_`.
+    fn safe_id(name: &str) -> String {
+        let lower = name.to_lowercase();
+        if RESERVED_KEYWORDS.contains(&lower.as_str()) {
+            format!("p_{}", name)
+        } else {
+            name.to_string()
+        }
+    }
+
     /// Format a call as a message label: `method(arg1, arg2)`
     fn format_message(call: &crate::model::CallExpr) -> String {
         let args_str = call
@@ -19,35 +45,49 @@ impl SequenceEmitter {
         format!("{}({})", call.method, args_str)
     }
 
+    /// Returns true if a call target is a noise type that should be skipped.
+    fn is_noise(name: &str) -> bool {
+        NOISE_TYPES.contains(&name)
+    }
+
     /// Emit sequence messages for a function's calls.
-    /// `caller` is the participant name of the calling context.
+    /// `caller` is the safe participant ID of the calling context.
     fn emit_calls(
         output: &mut String,
-        caller: &str,
+        caller_id: &str,
         func: &Function,
         all_functions: &[Function],
         visited: &mut HashSet<String>,
+        id_map: &HashMap<String, String>,
     ) {
         for call in &func.calls {
-            let target = call
+            let target_name = call
                 .receiver
                 .as_deref()
                 .unwrap_or(&call.method);
+
+            // Skip calls to noise types (Box::new, Vec::new, Some(), etc.)
+            if Self::is_noise(target_name) {
+                continue;
+            }
+
+            let target_id = id_map
+                .get(target_name)
+                .cloned()
+                .unwrap_or_else(|| Self::safe_id(target_name));
             let message = Self::format_message(call);
 
-            // Emit the call arrow
-            output.push_str(&format!("    {}->>{}:{}\n", caller, target, message));
+            output.push_str(&format!("    {}->>{}:{}\n", caller_id, target_id, message));
 
-            // If the called method resolves to a known function, recurse into it
             if !visited.contains(&call.method) {
                 if let Some(nested) = all_functions
                     .iter()
                     .find(|f| f.name == call.method && !f.calls.is_empty())
                 {
                     visited.insert(call.method.clone());
-                    output.push_str(&format!("    activate {}\n", target));
-                    Self::emit_calls(output, target, nested, all_functions, visited);
-                    output.push_str(&format!("    deactivate {}\n", target));
+                    output.push_str(&format!("    activate {}\n", target_id));
+                    Self::emit_calls(output, &target_id, nested, all_functions, visited, id_map);
+                    output.push_str(&format!("    deactivate {}\n", target_id));
                 }
             }
         }
@@ -76,7 +116,7 @@ impl DiagramEmitter for SequenceEmitter {
             return output;
         }
 
-        // Collect all unique participants
+        // Collect all unique participants, skipping noise types
         let mut participants = Vec::new();
         let mut seen = HashSet::new();
         for func in &interesting {
@@ -85,13 +125,22 @@ impl DiagramEmitter for SequenceEmitter {
             }
             for call in &func.calls {
                 let target = call.receiver.as_deref().unwrap_or(&call.method);
-                if seen.insert(target.to_string()) {
+                if !Self::is_noise(target) && seen.insert(target.to_string()) {
                     participants.push(target.to_string());
                 }
             }
         }
+
+        // Build ID map: original name -> safe mermaid ID
+        let mut id_map = HashMap::new();
         for p in &participants {
-            output.push_str(&format!("    participant {}\n", p));
+            let safe = Self::safe_id(p);
+            if &safe != p {
+                output.push_str(&format!("    participant {} as {}\n", safe, p));
+            } else {
+                output.push_str(&format!("    participant {}\n", p));
+            }
+            id_map.insert(p.clone(), safe);
         }
 
         // Emit each top-level function's call sequence
@@ -99,8 +148,9 @@ impl DiagramEmitter for SequenceEmitter {
             let mut visited = HashSet::new();
             visited.insert(func.name.clone());
 
-            output.push_str(&format!("    Note over {}: {}\n", func.name, func.name));
-            Self::emit_calls(&mut output, &func.name, func, &model.functions, &mut visited);
+            let func_id = id_map.get(&func.name).cloned().unwrap_or_else(|| func.name.clone());
+            output.push_str(&format!("    Note over {}: {}\n", func_id, func.name));
+            Self::emit_calls(&mut output, &func_id, func, &model.functions, &mut visited, &id_map);
         }
 
         output
