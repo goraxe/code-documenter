@@ -1,6 +1,6 @@
 use crate::model::{CodeModel, Function};
 
-use super::DiagramEmitter;
+use super::{DiagramEmitter, MermaidTheme};
 
 pub struct ZenumlEmitter;
 
@@ -44,8 +44,9 @@ impl ZenumlEmitter {
 }
 
 impl DiagramEmitter for ZenumlEmitter {
-    fn emit(&self, model: &CodeModel) -> String {
-        let mut output = String::from("zenuml\n");
+    fn emit(&self, model: &CodeModel, theme: &MermaidTheme) -> String {
+        let mut output = theme.directive();
+        output.push_str("zenuml\n");
 
         for func in &model.functions {
             Self::emit_function(&mut output, func, &model.functions);
@@ -64,7 +65,7 @@ mod tests {
     fn test_emit_empty_model() {
         let emitter = ZenumlEmitter;
         let model = CodeModel::new();
-        assert_eq!(emitter.emit(&model), "zenuml\n");
+        assert_eq!(emitter.emit(&model, &MermaidTheme::Default), "zenuml\n");
     }
 
     #[test]
@@ -94,7 +95,7 @@ mod tests {
             relationships: vec![],
         };
 
-        let result = emitter.emit(&model);
+        let result = emitter.emit(&model, &MermaidTheme::Default);
         assert!(result.starts_with("zenuml\n"));
         assert!(result.contains("initialize()"));
         assert!(result.contains("run(config)"));
@@ -127,7 +128,7 @@ mod tests {
             relationships: vec![],
         };
 
-        let result = emitter.emit(&model);
+        let result = emitter.emit(&model, &MermaidTheme::Default);
         assert!(result.contains("db.connect()"));
         assert!(result.contains("db.query(sql, params)"));
     }
@@ -148,7 +149,7 @@ mod tests {
             relationships: vec![],
         };
 
-        let result = emitter.emit(&model);
+        let result = emitter.emit(&model, &MermaidTheme::Default);
         assert_eq!(result, "zenuml\n");
     }
 
@@ -186,7 +187,7 @@ mod tests {
             relationships: vec![],
         };
 
-        let result = emitter.emit(&model);
+        let result = emitter.emit(&model, &MermaidTheme::Default);
         assert!(result.contains("setup() {"));
         assert!(result.contains("Config.load(path)"));
         assert!(result.contains("}"));

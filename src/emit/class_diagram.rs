@@ -1,6 +1,6 @@
 use crate::model::{CodeModel, Entity, EntityKind, Field, Method, Relationship};
 
-use super::DiagramEmitter;
+use super::{DiagramEmitter, MermaidTheme};
 
 pub struct ClassDiagramEmitter;
 
@@ -118,8 +118,9 @@ impl ClassDiagramEmitter {
 }
 
 impl DiagramEmitter for ClassDiagramEmitter {
-    fn emit(&self, model: &CodeModel) -> String {
-        let mut output = String::from("classDiagram\n");
+    fn emit(&self, model: &CodeModel, theme: &MermaidTheme) -> String {
+        let mut output = theme.directive();
+        output.push_str("classDiagram\n");
 
         for entity in &model.entities {
             Self::emit_entity(&mut output, entity);
@@ -142,7 +143,7 @@ mod tests {
     fn test_emit_empty_model() {
         let emitter = ClassDiagramEmitter;
         let model = CodeModel::new();
-        assert_eq!(emitter.emit(&model), "classDiagram\n");
+        assert_eq!(emitter.emit(&model, &MermaidTheme::Default), "classDiagram\n");
     }
 
     #[test]
@@ -197,7 +198,7 @@ mod tests {
             relationships: vec![],
         };
 
-        let result = emitter.emit(&model);
+        let result = emitter.emit(&model, &MermaidTheme::Default);
         let expected = "\
 classDiagram
     class User {
@@ -246,7 +247,7 @@ classDiagram
             ],
         };
 
-        let result = emitter.emit(&model);
+        let result = emitter.emit(&model, &MermaidTheme::Default);
         let expected = "\
 classDiagram
     Dog <|-- Animal
@@ -280,7 +281,7 @@ classDiagram
             relationships: vec![],
         };
 
-        let result = emitter.emit(&model);
+        let result = emitter.emit(&model, &MermaidTheme::Default);
         assert!(result.contains("+area() f64*"));
     }
 
@@ -299,7 +300,7 @@ classDiagram
             relationships: vec![],
         };
 
-        let result = emitter.emit(&model);
+        let result = emitter.emit(&model, &MermaidTheme::Default);
         assert!(result.contains("<<Enumeration>>"));
     }
 
@@ -318,7 +319,7 @@ classDiagram
             relationships: vec![],
         };
 
-        let result = emitter.emit(&model);
+        let result = emitter.emit(&model, &MermaidTheme::Default);
         assert!(result.contains("class MyClass"));
         assert!(!result.contains("<<"));
     }

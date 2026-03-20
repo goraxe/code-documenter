@@ -40,6 +40,10 @@ struct Cli {
     /// Output file (defaults to stdout)
     #[arg(short = 'o', long = "output")]
     output: Option<PathBuf>,
+
+    /// Mermaid theme (default, neutral, dark, forest, base)
+    #[arg(short = 't', long = "theme", default_value = "neutral")]
+    theme: String,
 }
 
 fn main() -> Result<()> {
@@ -58,7 +62,14 @@ fn main() -> Result<()> {
         LanguageArg::TypeScript => Some(code_documenter::parse::Language::TypeScript),
     };
 
-    let result = code_documenter::run(&cli.path, diagram_type, language, cli.entry.as_deref())?;
+    let theme = if cli.theme == "default" {
+        code_documenter::emit::MermaidTheme::Default
+    } else {
+        code_documenter::emit::MermaidTheme::Named(cli.theme)
+    };
+
+    let result =
+        code_documenter::run(&cli.path, diagram_type, language, cli.entry.as_deref(), theme)?;
 
     if let Some(output_path) = cli.output {
         std::fs::write(&output_path, &result)?;

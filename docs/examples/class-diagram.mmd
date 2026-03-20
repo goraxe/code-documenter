@@ -1,3 +1,4 @@
+%%{init: {'theme':'neutral'}}%%
 classDiagram
     class LanguageParser {
         <<Interface>>
@@ -23,13 +24,19 @@ classDiagram
     }
     class DiagramEmitter {
         <<Interface>>
-        -emit(model CodeModel) String*
+        -emit(model CodeModel, theme MermaidTheme) String*
     }
     class DiagramType {
         <<Enumeration>>
         Class
         Er
         Zenuml
+    }
+    class MermaidTheme {
+        <<Enumeration>>
+        Default
+        Named
+        +directive() String
     }
     class ClassDiagramEmitter {
         <<Struct>>
@@ -38,7 +45,7 @@ classDiagram
         -emit_field(output String, field Field, is_enum bool)$
         -emit_method(output String, method Method)$
         -emit_relationship(output String, rel Relationship)$
-        -emit(model CodeModel) String
+        -emit(model CodeModel, theme MermaidTheme) String
     }
     class ErDiagramEmitter {
         <<Struct>>
@@ -46,12 +53,12 @@ classDiagram
         -emit_field(output String, field Field, is_enum bool)$
         -cardinality_notation(cardinality Cardinality) str$
         -emit_relationship(output String, rel Relationship)$
-        -emit(model CodeModel) String
+        -emit(model CodeModel, theme MermaidTheme) String
     }
     class ZenumlEmitter {
         <<Struct>>
         -emit_function(output String, func Function, all_functions [Function])$
-        -emit(model CodeModel) String
+        -emit(model CodeModel, theme MermaidTheme) String
     }
     class CodeModel {
         <<Struct>>
@@ -167,6 +174,7 @@ classDiagram
         -LanguageArg language
         -String entry
         -PathBuf output
+        -String theme
     }
     RustParser ..|> LanguageParser
     GoParser ..|> LanguageParser

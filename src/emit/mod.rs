@@ -6,7 +6,7 @@ use crate::model::CodeModel;
 
 /// Trait for diagram emitters.
 pub trait DiagramEmitter {
-    fn emit(&self, model: &CodeModel) -> String;
+    fn emit(&self, model: &CodeModel, theme: &MermaidTheme) -> String;
 }
 
 /// Supported diagram types.
@@ -15,6 +15,25 @@ pub enum DiagramType {
     Class,
     Er,
     Zenuml,
+}
+
+/// Mermaid theme configuration.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum MermaidTheme {
+    /// No theme directive — use Mermaid's default.
+    Default,
+    /// A named Mermaid theme (e.g. "neutral", "dark", "forest").
+    Named(String),
+}
+
+impl MermaidTheme {
+    /// Returns the `%%{init: ...}%%` directive to prepend, or empty string for default.
+    pub fn directive(&self) -> String {
+        match self {
+            MermaidTheme::Default => String::new(),
+            MermaidTheme::Named(name) => format!("%%{{init: {{'theme':'{}'}}}}%%\n", name),
+        }
+    }
 }
 
 /// Return the appropriate emitter for the given diagram type.

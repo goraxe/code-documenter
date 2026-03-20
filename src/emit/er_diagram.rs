@@ -1,6 +1,6 @@
 use crate::model::{Cardinality, CodeModel, Entity, Field, Relationship};
 
-use super::DiagramEmitter;
+use super::{DiagramEmitter, MermaidTheme};
 
 pub struct ErDiagramEmitter;
 
@@ -96,8 +96,9 @@ impl ErDiagramEmitter {
 }
 
 impl DiagramEmitter for ErDiagramEmitter {
-    fn emit(&self, model: &CodeModel) -> String {
-        let mut output = String::from("erDiagram\n");
+    fn emit(&self, model: &CodeModel, theme: &MermaidTheme) -> String {
+        let mut output = theme.directive();
+        output.push_str("erDiagram\n");
 
         for entity in &model.entities {
             Self::emit_entity(&mut output, entity);
@@ -120,7 +121,7 @@ mod tests {
     fn test_emit_empty_model() {
         let emitter = ErDiagramEmitter;
         let model = CodeModel::new();
-        assert_eq!(emitter.emit(&model), "erDiagram\n");
+        assert_eq!(emitter.emit(&model, &MermaidTheme::Default), "erDiagram\n");
     }
 
     #[test]
@@ -154,7 +155,7 @@ mod tests {
             relationships: vec![],
         };
 
-        let result = emitter.emit(&model);
+        let result = emitter.emit(&model, &MermaidTheme::Default);
         let expected = "\
 erDiagram
     User {
@@ -180,7 +181,7 @@ erDiagram
             }],
         };
 
-        let result = emitter.emit(&model);
+        let result = emitter.emit(&model, &MermaidTheme::Default);
         assert!(result.contains("Car ||--|| Engine : \"engine\""));
     }
 
@@ -198,7 +199,7 @@ erDiagram
             }],
         };
 
-        let result = emitter.emit(&model);
+        let result = emitter.emit(&model, &MermaidTheme::Default);
         assert!(result.contains("Library ||..o{ Book : \"books\""));
     }
 
@@ -214,7 +215,7 @@ erDiagram
             }],
         };
 
-        let result = emitter.emit(&model);
+        let result = emitter.emit(&model, &MermaidTheme::Default);
         assert!(result.contains("Dog ||--|| Animal : \"inherits\""));
     }
 
@@ -230,7 +231,7 @@ erDiagram
             }],
         };
 
-        let result = emitter.emit(&model);
+        let result = emitter.emit(&model, &MermaidTheme::Default);
         assert!(result.contains("Dog ||--|| Pet : \"implements\""));
     }
 
@@ -247,7 +248,7 @@ erDiagram
             }],
         };
 
-        let result = emitter.emit(&model);
+        let result = emitter.emit(&model, &MermaidTheme::Default);
         assert!(result.contains("Student ||--|| Course : \"enrolls\""));
     }
 
@@ -285,7 +286,7 @@ erDiagram
             ],
         };
 
-        let result = emitter.emit(&model);
+        let result = emitter.emit(&model, &MermaidTheme::Default);
         assert!(result.contains("A ||--|| B : \"one\""));
         assert!(result.contains("A ||--o| C : \"zero_or_one\""));
         assert!(result.contains("A ||--|{ D : \"one_or_more\""));

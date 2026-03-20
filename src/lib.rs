@@ -7,7 +7,7 @@ use std::path::Path;
 use anyhow::{Context, Result};
 use walkdir::WalkDir;
 
-use emit::DiagramType;
+use emit::{DiagramType, MermaidTheme};
 use model::CodeModel;
 use parse::Language;
 
@@ -16,12 +16,14 @@ use parse::Language;
 /// - `path`: a file or directory to analyze
 /// - `diagram_type`: which diagram format to emit
 /// - `language`: if `Some`, force this language for all files; if `None`, auto-detect
-/// - `_entry`: optional entry function name for ZenUML diagrams (reserved for Phase 2)
+/// - `_entry`: optional entry function name for ZenUML diagrams
+/// - `theme`: Mermaid theme to use
 pub fn run(
     path: &Path,
     diagram_type: DiagramType,
     language: Option<Language>,
     _entry: Option<&str>,
+    theme: MermaidTheme,
 ) -> Result<String> {
     let mut merged = CodeModel::new();
 
@@ -53,7 +55,7 @@ pub fn run(
     }
 
     let emitter = emit::get_emitter(diagram_type);
-    Ok(emitter.emit(&merged))
+    Ok(emitter.emit(&merged, &theme))
 }
 
 fn parse_single_file(path: &Path, language: Option<Language>) -> Result<CodeModel> {

@@ -1,3 +1,4 @@
+%%{init: {'theme':'neutral'}}%%
 zenuml
     path.extension()?.to_str()
     path.extension()
@@ -3973,7 +3974,8 @@ zenuml
     Some(code_documenter::parse::Language::Rust)
     Some(code_documenter::parse::Language::Go)
     Some(code_documenter::parse::Language::TypeScript)
-    code_documenter.run(&cli.path, diagram_type, language, cli.entry.as_deref()) {
+    code_documenter::emit::MermaidTheme.Named(cli.theme)
+    code_documenter.run(&cli.path, diagram_type, language, cli.entry.as_deref(), theme) {
         CodeModel.new()
         path.is_file()
         parse_single_file(path, language)
@@ -3996,8 +3998,8 @@ zenuml
         Some(lang)
         merged.merge(model)
         emit.get_emitter(diagram_type)
-        Ok(emitter.emit(&merged))
-        emitter.emit(&merged)
+        Ok(emitter.emit(&merged, &theme))
+        emitter.emit(&merged, &theme)
     }
     cli.entry.as_deref()
     std::fs.write(&output_path, &result)
@@ -4056,8 +4058,8 @@ zenuml
         Box.new(er_diagram::ErDiagramEmitter)
         Box.new(zenuml::ZenumlEmitter)
     }
-    Ok(emitter.emit(&merged))
-    emitter.emit(&merged)
+    Ok(emitter.emit(&merged, &theme))
+    emitter.emit(&merged, &theme)
     language
         .or_else(|| parse::detect_language(path)).context(format!("Could not detect language for {}", path.display()))
     language.or_else(|| parse::detect_language(path))
